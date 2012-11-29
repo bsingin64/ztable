@@ -50,11 +50,30 @@
 		var init = function() {
 			$nodes.each(function() {
 				$table = $(this);
+				destroyPrevious();
 				createLayout();
 				setStyle();
 				bindEvt();
 			});
 		};
+		var destroyPrevious = function() {
+	        var wrapper = $table.parents('.ztable-wrapper');
+	        if (wrapper.length) {
+	            $table.unwrap('.ztable-wrapper').unwrap('.ztable-data-container')
+	            $table.parent().find('[class*=ztable]').remove();
+	            wrapper.remove();
+	            $table.css({ 'margin': 0, 'width': '100%' }) //heavy handed, needs rethought.
+	        }
+
+
+	        var wrapper = $table.parents('.' + opts.wrapperClass);
+	        if (wrapper.length) {
+	            
+	            $table.unwrap('.' + opts.wrapperClass).unwrap('.' + opts.dataContainerClass);
+	            $table.parent().find('[class*=ztable]').remove();
+	            wrapper.remove();
+	        }
+	    };
 		// create divs for the table needed
 		var createLayout = function() {
 			// init table width
@@ -76,15 +95,14 @@
 
 			if (opts.frozenColumn) {
 				$vcc = $('<div />').addClass(opts.vColumnContainerClass);
-				$wrapper.prepend($vcc.append($table.clone()));
+				$wrapper.prepend($vcc.append($table.clone().attr("id", "_lock" + Math.random())));
 			}
 			if (opts.frozenRow) {
 				$hcc = $('<div />').addClass(opts.hColumnContainerClass);
-				$wrapper.prepend($hcc.append($table.clone()));
-			}
+				$wrapper.prepend($hcc.append($table.clone().attr("id", "_lock" + Math.random())));			}
 			if (opts.frozenColumn && opts.frozenRow) {
 				$tc = $('<div />').addClass(opts.titleContainerClass);
-				$wrapper.prepend($tc.append($table.clone()));
+				$wrapper.prepend($tc.append($table.clone().attr("id", "_lock" + Math.random())));
 			}
 		};
 
@@ -116,7 +134,9 @@
 				'overflow-y':	'scroll'
 			});
 
-			offset = $dc.find('tr:nth-child(' + (opts.rowCount + 1) + ')').offset();
+			if ($dc.find('thead').length) { opts.rowCount -= 1; }//account for table head
+
+			offset = $dc.find('tbody tr:nth-child(' + (opts.rowCount + 1) + ')').offset();
 			col_height = offset.top - $dc.offset().top;
 
 			$hcc.css('height', col_height);
@@ -168,10 +188,12 @@
 				'height':		opts.tableHeight
 			}); 
 
+			if ($dc.find('thead').length) { opts.rowCount -= 1; }//account for table head
+
 			offset = $dc.find('th:nth-child(' + (opts.columnCount + 1) + ')').offset();
 			col_width = offset.left - $dc.offset().left;
 			
-			offset = $dc.find('tr:nth-child(' + (opts.rowCount + 1) + ')').offset();
+			offset = $dc.find('tbody tr:nth-child(' + (opts.rowCount + 1) + ')').offset();
 			col_height = offset.top - $dc.offset().top;
 
 			$vcc.css({
